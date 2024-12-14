@@ -186,12 +186,7 @@ class _HomePageState extends State<HomePage> {
         return Container(
           alignment: Alignment.center,
           child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyWidget()),
-              );
-            },
+            onTap: () {},
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
