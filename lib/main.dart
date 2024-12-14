@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_gallery/pages/home_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {

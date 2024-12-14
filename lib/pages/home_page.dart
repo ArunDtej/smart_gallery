@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:smart_gallery/pages/viewImages.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,7 +10,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int min_size = 3;
+  int max_size = 4;
+  int _scale = 4;
+  double _previousScale = 2;
   dynamic albumData = {'albums': [], 'lengeth': 0};
+
   @override
   void initState() {
     super.initState();
@@ -18,8 +23,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void setData() async {
-    final PermissionState ps = await PhotoManager
-        .requestPermissionExtend(); // the method can use optional param `permission`.
+    final PermissionState ps = await PhotoManager.requestPermissionExtend();
     if (ps.isAuth) {
       var paths = await PhotoManager.getAssetPathList();
       var albums = [];
@@ -27,17 +31,15 @@ class _HomePageState extends State<HomePage> {
       for (int i = 0; i < paths.length; i++) {
         var thumbnail =
             await (await paths[i].getAssetListPaged(page: 0, size: 1))[0]
+                // .thumbnailDataWithSize(const ThumbnailSize(300, 300));
                 .thumbnailData;
+
         if (thumbnail != null) {
           albums.add({
             'path': paths[i],
             'name': paths[i].name,
             'thumbnail': thumbnail
           });
-        }
-        if (i == 18) {
-          print(paths[i].name);
-          print(thumbnail);
         }
       }
 
@@ -51,7 +53,35 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(padding: const EdgeInsets.all(16), child: getBody()),
+      appBar: AppBar(
+        // title: InkWell(
+        //     onTap: () {
+        //       Scaffold.of(context).openDrawer();
+        //     },
+        //     child: const Icon(Icons.menu_sharp)),
+      ),
+      drawer: getDrawer(),
+      body: GestureDetector(
+        onScaleStart: (details) {
+          _previousScale = _scale.toDouble();
+        },
+        onScaleUpdate: (details) {
+          setState(() {
+            double newScale = (_previousScale * details.scale)
+                .clamp(min_size.toDouble(), max_size.toDouble());
+            _scale = newScale.round();
+          });
+        },
+        onScaleEnd: (details) {
+          setState(() {
+            _scale = _scale.clamp(min_size, max_size);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: getBody(),
+        ),
+      ),
     );
   }
 
@@ -60,16 +90,7 @@ class _HomePageState extends State<HomePage> {
       spacing: 5,
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 30),
-          child: Text(
-            "Albums",
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-        ),
-        Expanded(child: getAlbums()),
-      ],
+      children: [Expanded(child: getAlbums())],
     );
   }
 
@@ -77,57 +98,93 @@ class _HomePageState extends State<HomePage> {
     albumData['length'] = albumData['albums']?.length ?? 0;
 
     return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 4,
-          crossAxisSpacing: 4,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7 - _scale.toInt(),
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
           childAspectRatio: 0.85),
       itemCount: albumData['length'],
       itemBuilder: (context, index) {
         return Container(
           alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.start, // Align items at the start
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // The image will take most of the available space
-              albumData['albums']?[index]?['thumbnail'] != null
-                  ? Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                            8), // Rounded corners for the image
-                        child: Image.memory(
-                          albumData['albums']?[index]?['thumbnail'],
-                          width: double
-                              .infinity, // Make the image take up all available width
-                          fit:
-                              BoxFit.cover, // Ensure the image covers the space
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyWidget()),
+              );
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                (albumData['albums']?[index]?['thumbnail'] != null
+                    ? Expanded(
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.memory(
+                              albumData['albums']?[index]?['thumbnail'],
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.image,
-                      size: 50,
-                      color: Colors.grey, // Icon color when no image
-                    ),
-
-              // Text/icon below the image
-              Padding(
-                padding: const EdgeInsets.only(
-                    top: 8.0), // Space between image and text
-                child: Text(
+                      )
+                    : const Icon(
+                        Icons.image,
+                        size: 50,
+                        color: Colors.grey,
+                      )),
+                Text(
                   '${albumData['albums']?[index]?['name'] ?? 'Unknown'}',
                   style: Theme.of(context).textTheme.labelLarge,
-                  overflow:
-                      TextOverflow.ellipsis, // Prevent overflow of long text
-                  textAlign: TextAlign.center, // Center the text
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Drawer getDrawer() {
+    return Drawer(
+      // Add a ListView to the drawer. This ensures the user can scroll
+      // through the options in the drawer if there isn't enough vertical
+      // space to fit everything.
+      child: ListView(
+        // Important: Remove any padding from the ListView.
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+            child: Text('Drawer Header'),
+          ),
+          ListTile(
+            title: const Text('Item 1'),
+            onTap: () {
+              // Update the state of the app.
+              // ...
+            },
+          ),
+          ListTile(
+            title: const Text('Item 2'),
+            onTap: () {
+              // Update the state of the app.
+              // ...
+            },
+          ),
+        ],
+      ),
     );
   }
 }
