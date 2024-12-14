@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_gallery/pages/home_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -29,15 +29,32 @@ class _MyAppState extends State<MyApp> {
         title: 'Main MaterialApp',
         theme: FlexThemeData.light(
           scheme: usedScheme,
-          appBarElevation: 0.5,
+          appBarElevation: 2,
           useMaterial3: useMaterial3,
+          colorScheme: ColorScheme.fromSwatch(
+            primarySwatch: Colors.blue,
+            accentColor: Colors.blueAccent,
+            cardColor: Colors.white,
+            backgroundColor: Colors.white,
+            errorColor: Colors.red[900],
+            brightness: Brightness.light,
+          ),
+          appBarStyle: FlexAppBarStyle.primary, // AppBar style
         ),
         darkTheme: FlexThemeData.dark(
           scheme: usedScheme,
           appBarElevation: 2,
           useMaterial3: useMaterial3,
+          colorScheme: ColorScheme.fromSwatch(
+            primarySwatch: Colors.blue,
+            accentColor: Colors.blueAccent,
+            cardColor: Colors.black,
+            backgroundColor: Colors.black,
+            errorColor: Colors.red[900],
+            brightness: Brightness.dark,
+          ),
+          appBarStyle: FlexAppBarStyle.primary,
         ),
-        themeMode: themeMode,
         home: const HomePage());
   }
 }
