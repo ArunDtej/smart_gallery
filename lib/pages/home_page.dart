@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:smart_gallery/pages/viewImages.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
   int max_size = 4;
   int _scale = 4;
   double _previousScale = 2;
-  dynamic albumData = {'albums': [], 'lengeth': 0};
+  dynamic albumData = {'albums': [], 'length': 0};
 
   @override
   void initState() {
@@ -53,13 +54,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        // title: InkWell(
-        //     onTap: () {
-        //       Scaffold.of(context).openDrawer();
-        //     },
-        //     child: const Icon(Icons.menu_sharp)),
-      ),
+      appBar: AppBar(),
       drawer: getDrawer(),
       body: GestureDetector(
         onScaleStart: (details) {
@@ -86,12 +81,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget getBody() {
-    return Column(
-      spacing: 5,
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Expanded(child: getAlbums())],
-    );
+    return Skeletonizer(
+        enabled: albumData['length'] < 1 ? true : false,
+        child: albumData['length'] < 1 ? getDummyAlbum() : getAlbums());
   }
 
   GridView getAlbums() {
@@ -142,7 +134,10 @@ class _HomePageState extends State<HomePage> {
                       )),
                 Text(
                   '${albumData['albums']?[index]?['name'] ?? 'Unknown'}',
-                  style: Theme.of(context).textTheme.labelLarge,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
@@ -156,11 +151,7 @@ class _HomePageState extends State<HomePage> {
 
   Drawer getDrawer() {
     return Drawer(
-      // Add a ListView to the drawer. This ensures the user can scroll
-      // through the options in the drawer if there isn't enough vertical
-      // space to fit everything.
       child: ListView(
-        // Important: Remove any padding from the ListView.
         padding: EdgeInsets.zero,
         children: [
           const DrawerHeader(
@@ -171,20 +162,71 @@ class _HomePageState extends State<HomePage> {
           ),
           ListTile(
             title: const Text('Item 1'),
-            onTap: () {
-              // Update the state of the app.
-              // ...
-            },
+            onTap: () {},
           ),
           ListTile(
             title: const Text('Item 2'),
-            onTap: () {
-              // Update the state of the app.
-              // ...
-            },
+            onTap: () {},
           ),
         ],
       ),
+    );
+  }
+
+  Widget getDummyAlbum() {
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7 - _scale.toInt(),
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: 13,
+      itemBuilder: (context, index) {
+        return Container(
+          alignment: Alignment.center,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyWidget()),
+              );
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: const Icon(
+                      Icons.image, // Replace this with any icon you'd like
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Album Name',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
