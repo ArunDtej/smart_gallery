@@ -1,21 +1,10 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:smart_gallery/utils/permission_manager.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
 
 import 'dart:typed_data';
 import 'package:photo_manager/photo_manager.dart';
 
-import 'package:image/image.dart' as img;
-import 'package:flutter/material.dart';
-import 'dart:typed_data';
-import 'package:photo_manager/photo_manager.dart';
 
-import 'package:flutter/material.dart';
-import 'package:photo_manager/photo_manager.dart';
-import 'dart:typed_data';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

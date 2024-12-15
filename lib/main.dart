@@ -32,14 +32,14 @@ class _MyAppState extends State<MyApp> {
           appBarElevation: 2,
           useMaterial3: useMaterial3,
           colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: Colors.blue,
-            accentColor: Colors.blueAccent,
+            primarySwatch: Colors.green,
+            accentColor: Colors.greenAccent,
             cardColor: Colors.white,
             backgroundColor: Colors.white,
             errorColor: Colors.red[900],
             brightness: Brightness.light,
           ),
-          appBarStyle: FlexAppBarStyle.primary, // AppBar style
+          appBarStyle: FlexAppBarStyle.primary,
         ),
         darkTheme: FlexThemeData.dark(
           scheme: usedScheme,
