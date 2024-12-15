@@ -1,8 +1,8 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:smart_gallery/pages/view_asset.dart';
 
 const loadingAnimation = Center(
   child: SpinKitFadingCircle(
@@ -23,9 +23,8 @@ class Viewimages extends StatefulWidget {
 class _ViewimagesState extends State<Viewimages> {
   int totalAssets = 0;
   int crossAxisCount = 4;
-  double previousDelta = 0.0; // Store previous drag delta
-  double dragThreshold =
-      5.0; // Threshold for sensitivity, smaller = more sensitive
+  double dragThreshold = 8.0;
+  double previousDelta = 0.0;
 
   @override
   void initState() {
@@ -50,12 +49,10 @@ class _ViewimagesState extends State<Viewimages> {
         title: Row(
           children: [
             InkWell(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(7),
-                child: const Icon(Icons.arrow_back_ios_new, size: 20),
+              onTap: () => Navigator.pop(context),
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(Icons.arrow_back_ios_new, size: 20),
               ),
             ),
             Expanded(
@@ -74,30 +71,25 @@ class _ViewimagesState extends State<Viewimages> {
           ? const Center(child: CircularProgressIndicator())
           : GestureDetector(
               onHorizontalDragUpdate: (details) {
-                double delta = details.primaryDelta!;
-
-                // Check if the delta is large enough to trigger the update
-                if (delta.abs() > dragThreshold) {
-                  // If swiping to the right, increase the grid count
-                  if (delta < 0 && crossAxisCount < 5) {
-                    setState(() {
-                      crossAxisCount++;
-                    });
-                  }
-                  // If swiping to the left, decrease the grid count
-                  else if (delta > 0 && crossAxisCount > 1) {
-                    setState(() {
-                      crossAxisCount--;
-                    });
-                  }
-                }
-
-                // Store the previous delta value for next comparison
-                previousDelta = delta;
+                _handleSwipe(details.primaryDelta!);
               },
               child: getGridBody(),
             ),
     );
+  }
+
+  // Swipe handling logic
+  void _handleSwipe(double delta) {
+    if (delta.abs() > dragThreshold) {
+      setState(() {
+        if (delta < 0 && crossAxisCount < 5) {
+          crossAxisCount++;
+        } else if (delta > 0 && crossAxisCount > 1) {
+          crossAxisCount--;
+        }
+      });
+    }
+    previousDelta = delta;
   }
 
   Widget getGridBody() {
@@ -130,7 +122,7 @@ class _GridItemState extends State<GridItem>
     with AutomaticKeepAliveClientMixin {
   Uint8List? imageBytes;
   bool isVideo = false;
-
+  var firstAsset;
   @override
   void initState() {
     super.initState();
@@ -140,7 +132,7 @@ class _GridItemState extends State<GridItem>
   void _loadThumbnail() async {
     final asset = await widget.folderPath
         .getAssetListRange(start: widget.index, end: widget.index + 1);
-    final firstAsset = asset.first;
+    firstAsset = asset.first;
 
     setState(() {
       isVideo = firstAsset.type == AssetType.video;
@@ -160,37 +152,48 @@ class _GridItemState extends State<GridItem>
     final placeholderColor =
         theme.brightness == Brightness.dark ? Colors.black : Colors.white;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.5),
-          width: 0.5,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ViewAsset(index: widget.index, folderPath: widget.folderPath),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.5),
+            width: 0.5,
+          ),
+          borderRadius: BorderRadius.circular(8.0),
         ),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: Container(
-          color: placeholderColor,
-          child: Stack(
-            children: [
-              imageBytes == null
-                  ? loadingAnimation
-                  : Image.memory(
-                      imageBytes!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Container(
+            color: placeholderColor,
+            child: Stack(
+              children: [
+                imageBytes == null
+                    ? loadingAnimation
+                    : Image.memory(
+                        imageBytes!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                if (isVideo)
+                  const Center(
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 32,
                     ),
-              if (isVideo)
-                const Center(
-                  child: Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 32,
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
