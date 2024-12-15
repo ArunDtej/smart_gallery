@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:open_file/open_file.dart';
+import 'package:photo_view/photo_view.dart';
 import 'dart:math';
 import 'dart:async';
+
+import 'package:smart_gallery/pages/view_images.dart';
 
 class ViewAsset extends StatefulWidget {
   final int index;
@@ -30,6 +33,8 @@ class _ViewAssetState extends State<ViewAsset> {
   DateTime? assetCreationDate;
   Timer? _hideDetailsTimer; // Timer to hide the details after a few seconds
 
+  final double swipeThreshold = 50.0; // Adjust swipe sensitivity threshold
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +44,6 @@ class _ViewAssetState extends State<ViewAsset> {
 
   @override
   void dispose() {
-    // Cancel the timer when the widget is disposed
     _hideDetailsTimer?.cancel();
     super.dispose();
   }
@@ -61,13 +65,10 @@ class _ViewAssetState extends State<ViewAsset> {
 
     if (assets.isNotEmpty) {
       currentAsset = assets.first;
-
-      // Set common metadata
       assetFilename = await currentAsset?.titleAsync;
       assetResolution = '${currentAsset?.width} x ${currentAsset?.height}';
       assetCreationDate = currentAsset?.createDateTime;
 
-      // Get file size
       final File? file = await currentAsset?.originFile;
       if (file != null) {
         assetSize = _formatBytes(file.lengthSync());
@@ -77,25 +78,18 @@ class _ViewAssetState extends State<ViewAsset> {
         setState(() {
           isVideo = true;
         });
-
-        final videoThumbnail = await currentAsset!.thumbnailDataWithSize(
-          const ThumbnailSize(800, 800),
-        );
+        final videoThumbnail = await currentAsset!
+            .thumbnailDataWithSize(const ThumbnailSize(800, 800));
         setState(() {
           imageBytes = videoThumbnail;
-        });
-
-        setState(() {
           isLoading = false;
         });
       } else if (currentAsset!.type == AssetType.image) {
         setState(() {
           isImage = true;
         });
-
-        final imageData = await currentAsset!.thumbnailDataWithSize(
-          const ThumbnailSize(800, 800),
-        );
+        final imageData = await currentAsset!
+            .thumbnailDataWithSize(const ThumbnailSize(800, 800));
         setState(() {
           imageBytes = imageData;
           isLoading = false;
@@ -134,14 +128,16 @@ class _ViewAssetState extends State<ViewAsset> {
     }
   }
 
-  void _nextAsset() {
-    setState(() {
-      currentIndex++;
-    });
-    _loadAsset();
+  void _nextAsset() async {
+    int size = await widget.folderPath.assetCountAsync;
+    if (currentIndex < size - 1) {
+      setState(() {
+        currentIndex++;
+      });
+      _loadAsset();
+    }
   }
 
-  /// Handle tap to show details and start the timer to hide them
   void _onTap() {
     setState(() {
       _showDetails = !_showDetails; // Toggle visibility
@@ -164,21 +160,22 @@ class _ViewAssetState extends State<ViewAsset> {
       body: Stack(
         children: [
           GestureDetector(
-            onTap: _onTap, // Detect tap to show/hide details
+            onTap: _onTap,
             onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! > 0) {
-                _previousAsset(); // Swipe right
-              } else if (details.primaryVelocity! < 0) {
-                _nextAsset(); // Swipe left
+              if (details.primaryVelocity!.abs() > swipeThreshold) {
+                if (details.primaryVelocity! > 0) {
+                  _previousAsset(); // Swipe right to go to the previous asset
+                } else if (details.primaryVelocity! < 0) {
+                  _nextAsset(); // Swipe left to go to the next asset
+                }
               }
             },
             child: Center(
               child: isLoading
-                  ? const CircularProgressIndicator()
+                  ? loadingAnimation
                   : isImage && imageBytes != null
-                      ? Image.memory(
-                          imageBytes!,
-                          fit: BoxFit.contain,
+                      ? PhotoView(
+                          imageProvider: MemoryImage(imageBytes!),
                         )
                       : isVideo && imageBytes != null
                           ? Stack(
@@ -207,13 +204,14 @@ class _ViewAssetState extends State<ViewAsset> {
           if (_showDetails && !isLoading && currentAsset != null)
             Positioned(
               bottom: 20,
-              left: 16,
-              right: 16,
+              left: 0,
+              right: 0,
               child: Card(
                 color: Colors.black.withOpacity(0.7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 6,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -280,17 +278,39 @@ class _ViewAssetState extends State<ViewAsset> {
                 ),
               ),
             ),
-          Positioned(
-            top: 40,
-            left: 16,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ),
+          if (_showDetails && !isLoading) toolbar(),
         ],
+      ),
+    );
+  }
+
+  Widget toolbar() {
+    double iconSize = 20;
+    return Positioned(
+      top: 40,
+      right: 16,
+      child: Card(
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        color: Colors.black.withOpacity(0.7),
+        child: Column(
+          spacing: 6,
+          children: [
+            IconButton(
+              iconSize: iconSize,
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () {},
+            ),
+            IconButton(
+              iconSize: iconSize,
+              icon: const Icon(Icons.delete, color: Colors.white),
+              // onPressed: _nextAsset,
+              onPressed: () {},
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -10,13 +10,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int minSize = 3;
+  int minSize = 2;
   int maxSize = 5;
-  int _scale = 4;
-  double _previousScale = 1.0;
+  int _scale = 2;
+  double _previousDelta = 0.0; // For detecting horizontal swipe direction
   List<AssetPathEntity> albumPaths = [];
-  bool _isPinchInProgress = false;
-  int _pointerCount = 0;
+  bool _isSwiping = false;
+  bool _isPermissionGranted = false;
 
   @override
   void initState() {
@@ -28,9 +28,13 @@ class _HomePageState extends State<HomePage> {
     final PermissionState ps = await PhotoManager.requestPermissionExtend();
     if (ps.isAuth) {
       final paths = await PhotoManager.getAssetPathList();
-
       setState(() {
         albumPaths = paths;
+        _isPermissionGranted = true;
+      });
+    } else {
+      setState(() {
+        _isPermissionGranted = false;
       });
     }
   }
@@ -40,53 +44,75 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(),
       drawer: getDrawer(),
-      body: GestureDetector(
-        onScaleStart: (details) {
-          _previousScale = _scale.toDouble();
-          setState(() {
-            _pointerCount = details.pointerCount; // Track number of fingers
-            _isPinchInProgress = _pointerCount > 1; // Only active when pinch
-          });
-        },
-        onScaleUpdate: (details) {
-          if (_isPinchInProgress) {
-            setState(() {
-              double newScale = (_previousScale * details.scale)
-                  .clamp(minSize.toDouble(), maxSize.toDouble());
-              _scale = newScale.round();
-            });
-          }
-        },
-        onScaleEnd: (details) {
-          setState(() {
-            _scale = _scale.clamp(minSize, maxSize);
-            _isPinchInProgress = false;
-            _pointerCount = 0;
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
-          child: _isPinchInProgress
-              ? _disableScrollOnPinch(getAlbums())
-              : getAlbums(),
-        ),
+      body: _isPermissionGranted
+          ? GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                _handleSwipe(details.primaryDelta!);
+              },
+              onHorizontalDragEnd: (details) {
+                _isSwiping = false;
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
+                child: getAlbums(),
+              ),
+            )
+          : _permissionDeniedUI(), // Show the permission denied UI
+    );
+  }
+
+  // UI when permission is not granted
+  Widget _permissionDeniedUI() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.warning,
+            size: 50,
+            color: Colors.blueAccent,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Permission Denied\nPlease allow access to photos.",
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              fetchAlbums();
+            },
+            child: GestureDetector(
+                onTap: () {
+                  fetchAlbums();
+                },
+                child: Text("Try again!",style: Theme.of(context).textTheme.bodyLarge
+                )),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _disableScrollOnPinch(Widget child) {
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {},
-      onHorizontalDragUpdate:
-          (details) {},
-      child: child,
-    );
+  void _handleSwipe(double delta) {
+    if (delta.abs() > 8.0) {
+      setState(() {
+        if (delta < 0 && _scale < maxSize) {
+          _scale++;
+        } else if (delta > 0 && _scale > minSize) {
+          _scale--;
+        }
+      });
+    }
   }
 
   GridView getAlbums() {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7 - _scale,
+        crossAxisCount: _scale,
         mainAxisSpacing: 0,
         crossAxisSpacing: 0,
         childAspectRatio: 0.85,
