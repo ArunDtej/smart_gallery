@@ -6,6 +6,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
+import 'package:smart_gallery/utils/models.dart';
 
 const loadingAnimation = Center(
   child: SpinKitFadingCircle(
@@ -77,16 +78,20 @@ class _ViewimagesState extends State<Viewimages> {
                   context: context,
                   title: "Generate labels?",
                   content:
-                      "Generate labels for images in this folder to enable search. This one-time process uses local models and takes just a few minutes.",
-                  onConfirm: () {
-                    Box rawEmbeddings =
-                        HiveService.instance.getRawEmbeddingBox();
-                    print('my_logs ${rawEmbeddings.keys}');
-                    print('my_logs On confirm callback');
+                      "Generate labels for images in this folder locally to enable search. This one-time process usually takes just a few minutes.",
+                  onConfirm: () async {
+
+                    Model model = HiveService.instance.getModel();
+                    if (HiveService.instance.isModelRunning) {
+                      CommonUtils.showSnackbar(
+                          context: context,
+                          message:
+                              "Model is already running in the background!, please try again after the current task has been executed!");
+                      return;
+                    }
+                    model.predictFolder(widget.folderPath, context);
                   },
-                  onCancel: () {
-                    print('my_logs On cancel callback');
-                  });
+                  onCancel: () async {});
             },
             icon: const Icon(Icons.auto_awesome, color: Colors.white),
           ),

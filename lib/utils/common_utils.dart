@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+// import 'package:fluttertoast/fluttertoast.dart';
 
 class CommonUtils {
   // Show a simple dialog
@@ -37,20 +37,6 @@ class CommonUtils {
     );
   }
 
-  // Show a toast message
-  static void showToast(String message,
-      {ToastGravity gravity = ToastGravity.BOTTOM}) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: gravity,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
-  }
-
-  // Show a snackbar
   static void showSnackbar({
     required BuildContext context,
     required String message,
@@ -62,6 +48,4 @@ class CommonUtils {
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-
-  // Any other reusable utility functions can be added here
 }

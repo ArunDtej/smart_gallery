@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:open_file/open_file.dart';
 import 'package:photo_view/photo_view.dart';
@@ -8,6 +9,8 @@ import 'dart:math';
 import 'dart:async';
 
 import 'package:smart_gallery/pages/view_images.dart';
+import 'package:smart_gallery/utils/common_utils.dart';
+import 'package:smart_gallery/utils/hive_singleton.dart';
 
 class ViewAsset extends StatefulWidget {
   final int index;
@@ -23,7 +26,7 @@ class _ViewAssetState extends State<ViewAsset> {
   bool isVideo = false;
   bool isImage = false;
   bool isLoading = true;
-  bool _showDetails = false; // Tracks whether the details are visible
+  bool _showDetails = false;
   Uint8List? imageBytes;
   AssetEntity? currentAsset;
   int currentIndex = 0;
@@ -31,9 +34,9 @@ class _ViewAssetState extends State<ViewAsset> {
   String? assetResolution;
   String? assetSize;
   DateTime? assetCreationDate;
-  Timer? _hideDetailsTimer; // Timer to hide the details after a few seconds
+  Timer? _hideDetailsTimer;
 
-  final double swipeThreshold = 50.0; // Adjust swipe sensitivity threshold
+  final double swipeThreshold = 50.0;
 
   @override
   void initState() {
@@ -140,12 +143,11 @@ class _ViewAssetState extends State<ViewAsset> {
 
   void _onTap() {
     setState(() {
-      _showDetails = !_showDetails; // Toggle visibility
+      _showDetails = !_showDetails;
     });
 
-    // If showing details, set a timer to hide them after a few seconds
     if (_showDetails) {
-      _hideDetailsTimer?.cancel(); // Cancel any previous timer
+      _hideDetailsTimer?.cancel();
       _hideDetailsTimer = Timer(const Duration(seconds: 3), () {
         setState(() {
           _showDetails = false;
@@ -301,17 +303,38 @@ class _ViewAssetState extends State<ViewAsset> {
             IconButton(
               iconSize: iconSize,
               icon: const Icon(Icons.search, color: Colors.white),
-              onPressed: () {},
-            ),
-            IconButton(
-              iconSize: iconSize,
-              icon: const Icon(Icons.delete, color: Colors.white),
-              // onPressed: _nextAsset,
-              onPressed: () {},
+              onPressed: () {
+                searchForSimilar();
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void searchForSimilar() {
+    if (currentAsset == null ||
+        (currentAsset?.orientatedHeight ?? 3001) > 3000 ||
+        (currentAsset?.orientatedWidth ?? 3001) > 3000 ||
+        currentAsset?.type != AssetType.image) {
+      CommonUtils.showSnackbar(
+          context: context,
+          message:
+              "Image too large or not a valid image, can't perform search!");
+      return;
+    }
+    Box embeddingBox = HiveService.instance.getEmbeddingsBox();
+    Map<dynamic, dynamic> rawEmbeddings = embeddingBox.get('rawEmbeddings');
+    String filePath = '${currentAsset?.relativePath}${currentAsset?.title}';
+
+    if (rawEmbeddings.keys.contains(filePath)) {
+    } else {
+      CommonUtils.showSnackbar(
+          context: context,
+          message:
+              "Image has not been encoded, go back and generate encodings in the previous page!");
+      return;
+    }
   }
 }

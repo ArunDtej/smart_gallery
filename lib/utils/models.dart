@@ -1,76 +1,201 @@
 import 'dart:typed_data';
-import 'package:image/image.dart' as img;
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive/hive.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:smart_gallery/main.dart';
+import 'package:smart_gallery/utils/hive_singleton.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:image/image.dart' as img;
 
 class Model {
   Interpreter? _interpreter;
+  IsolateInterpreter? isolateInterpreter;
   String progress = '0';
 
   Future<void> initModel() async {
-    final gpuDelegateV2 = GpuDelegateV2(
-      options: GpuDelegateOptionsV2(
-        isPrecisionLossAllowed: true,
-      ),
-    );
-
-    var interpreterOptions = InterpreterOptions()..addDelegate(gpuDelegateV2);
+    var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
 
     _interpreter = await Interpreter.fromAsset(
       'assets/models/mobilenet_v3_embedder.tflite',
       options: interpreterOptions,
     );
+    final isolateInterpreter =
+        await IsolateInterpreter.create(address: _interpreter!.address);
   }
 
-  Future<Uint8List> preprocessImage(Uint8List bytes,
-      {int inputSize = 224}) async {
-    img.Image? imageDecoded = img.decodeImage(Uint8List.fromList(bytes));
-
+  Future<Float32List> preprocessImage(Uint8List imageBytes) async {
+    img.Image? imageDecoded = img.decodeImage(Uint8List.fromList(imageBytes));
     if (imageDecoded == null) {
       throw Exception("Failed to decode image");
     }
 
     img.Image resizedImage =
-        img.copyResize(imageDecoded, width: inputSize, height: inputSize);
+        img.copyResize(imageDecoded, width: 224, height: 224);
 
-    return imageToFloatList(resizedImage);
-  }
-
-  Future<Uint8List> imageToFloatList(img.Image image) async {
     List<double> floatValues = [];
-
-    for (int y = 0; y < image.height; y++) {
-      for (int x = 0; x < image.width; x++) {
-        img.Pixel pixel = image.getPixel(x, y);
-
+    for (int y = 0; y < resizedImage.height; y++) {
+      for (int x = 0; x < resizedImage.width; x++) {
+        img.Pixel pixel = resizedImage.getPixel(x, y);
         floatValues.add(pixel.r / 255.0);
         floatValues.add(pixel.g / 255.0);
         floatValues.add(pixel.b / 255.0);
       }
     }
 
-    Float32List floatList = Float32List.fromList(floatValues);
-    var inp = floatList.reshape([1, 224, 224, 3]);
-
-    return floatList.buffer.asUint8List();
+    return Float32List.fromList(floatValues);
   }
 
-  Future<List<List<double>>> predictBatch(List<Uint8List> input) async {
-    List<List<double>> results = [];
+  Future<List<List<double>>> predictBatch(List<Float32List> batchInput) async {
+    List<Object> inputList = [];
+    for (var image in batchInput) {
+      inputList.add(image.toList());
+    }
 
-    for (var imageBytes in input) {
-      var output = List.filled(1 * 1024, 0.0).reshape([1, 1024]);
-      _interpreter?.run(imageBytes, output);
-      results.add(output[0]);
+    List<Object> inputs = inputList;
+
+    Map<int, Object> outputs = {};
+    for (int i = 0; i < batchInput.length; i++) {
+      outputs[i] = List<double>.filled(1024, 0.0);
+    }
+
+    await isolateInterpreter?.runForMultipleInputs(inputs, outputs);
+
+    List<List<double>> results = [];
+    for (int i = 0; i < batchInput.length; i++) {
+      results.add(List<double>.from(outputs[i] as List<double>));
     }
 
     return results;
   }
 
-  String getProgress() {
-    return progress;
+  Future<void> predictFolder(
+      AssetPathEntity folderPath, BuildContext context) async {
+    HiveService.instance.isModelRunning = true;
+    Box embeddingBox = HiveService.instance.getEmbeddingsBox();
+    Map<dynamic, dynamic> rawEmbeddings = embeddingBox.get('rawEmbeddings');
+    var existingImages = rawEmbeddings.keys;
+
+    List paths = [];
+
+    try {
+      int page = 0;
+      bool hasMoreAssets = true;
+      int batchSize = 25;
+      int total = 0;
+      const int maxImageSize = 3000;
+
+      while (hasMoreAssets) {
+        List<AssetEntity> assets =
+            await folderPath.getAssetListPaged(page: page, size: 25);
+        paths.clear();
+
+        print('Processing page $page with ${assets.length} assets.');
+
+        if (assets.isNotEmpty) {
+          List<Float32List> batchInput = [];
+
+          for (var asset in assets) {
+            String filePath = '${asset.relativePath}${asset.title}';
+            try {
+              if (asset.type == AssetType.image &&
+                  asset.orientatedHeight < maxImageSize &&
+                  asset.orientatedWidth < maxImageSize &&
+                  !existingImages.contains(filePath)) {
+                paths.add(filePath);
+                var byteData = await asset.originBytes;
+                if (byteData != null) {
+                  var decodedImage =
+                      img.decodeImage(Uint8List.fromList(byteData));
+                  if (decodedImage == null) {
+                    continue;
+                  }
+
+                  Float32List preprocessedImage =
+                      await preprocessImage(byteData);
+                  batchInput.add(preprocessedImage);
+
+                  if (batchInput.length == batchSize) {
+                    List<List<double>> results =
+                        await _processBatch(batchInput);
+                    total += batchInput.length;
+
+                    assignLabels(paths, results, rawEmbeddings);
+
+                    batchInput.clear();
+                    paths.clear();
+                  }
+
+                  decodedImage = null;
+                }
+                byteData = null;
+              }
+            } catch (e) {
+              print('Error processing asset: $e');
+            }
+          }
+
+          if (batchInput.isNotEmpty) {
+            List<List<double>> results = await _processBatch(batchInput);
+            total += batchInput.length;
+            assignLabels(paths, results, rawEmbeddings);
+
+            batchInput.clear();
+            paths.clear();
+          }
+
+          page++;
+        } else {
+          hasMoreAssets = false;
+        }
+      }
+
+      await _showNotification(
+        'Folder images Encoding Complete.',
+        'Processed $total new images successfully!',
+      );
+
+      HiveService.instance.isModelRunning = false;
+    } catch (e) {
+      print('Error during folder prediction: $e');
+    }
   }
 
-  void close() {
-    _interpreter?.close();
+  Future<List<List<double>>> _processBatch(List<Float32List> batchInput) async {
+    try {
+      List<List<double>> predictions = await predictBatch(batchInput);
+      return predictions;
+    } catch (e) {
+      print('Error during batch prediction: $e');
+      return [[]];
+    }
+  }
+
+  Future<void> _showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'prediction_channel_id',
+      'Prediction Notifications',
+      channelDescription: 'Notifications for prediction tasks',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
+  void assignLabels(List paths, List<List<double>> results,
+      Map<dynamic, dynamic> rawEmbeddings) {
+    for (int i = 0; i < paths.length; i++) {
+      rawEmbeddings[paths[i]] = results[i];
+    }
   }
 }
