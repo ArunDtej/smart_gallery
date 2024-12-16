@@ -49,21 +49,25 @@ class Model {
   Future<List<List<double>>> predictBatch(List<Float32List> batchInput) async {
     List<Object> inputList = [];
     for (var image in batchInput) {
-      inputList.add(image.toList());
+      inputList.add(image.reshape([224, 224, 3]));
     }
 
     List<Object> inputs = inputList;
 
-    Map<int, Object> outputs = {};
+    Map<int, List<double>> outputs = {};
     for (int i = 0; i < batchInput.length; i++) {
-      outputs[i] = List<double>.filled(1024, 0.0);
+      outputs[i] = List<double>.filled(1024, 0);
     }
+
+    print(inputs.shape);
 
     await isolateInterpreter?.runForMultipleInputs(inputs, outputs);
 
+    print(outputs);
+
     List<List<double>> results = [];
     for (int i = 0; i < batchInput.length; i++) {
-      results.add(List<double>.from(outputs[i] as List<double>));
+      results.add(List<double>.from(outputs[i]!));
     }
 
     return results;
@@ -120,7 +124,7 @@ class Model {
                         await _processBatch(batchInput);
                     total += batchInput.length;
 
-                    assignLabels(paths, results, rawEmbeddings);
+                    // assignLabels(paths, results, rawEmbeddings);
 
                     batchInput.clear();
                     paths.clear();
@@ -138,7 +142,7 @@ class Model {
           if (batchInput.isNotEmpty) {
             List<List<double>> results = await _processBatch(batchInput);
             total += batchInput.length;
-            assignLabels(paths, results, rawEmbeddings);
+            // assignLabels(paths, results, rawEmbeddings);
 
             batchInput.clear();
             paths.clear();

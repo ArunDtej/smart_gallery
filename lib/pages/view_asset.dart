@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:smart_gallery/pages/view_images.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
+import 'package:smart_gallery/utils/similarity_model.dart';
 
 class ViewAsset extends StatefulWidget {
   final int index;
@@ -166,9 +167,9 @@ class _ViewAssetState extends State<ViewAsset> {
             onHorizontalDragEnd: (details) {
               if (details.primaryVelocity!.abs() > swipeThreshold) {
                 if (details.primaryVelocity! > 0) {
-                  _previousAsset(); // Swipe right to go to the previous asset
+                  _previousAsset();
                 } else if (details.primaryVelocity! < 0) {
-                  _nextAsset(); // Swipe left to go to the next asset
+                  _nextAsset();
                 }
               }
             },
@@ -329,6 +330,8 @@ class _ViewAssetState extends State<ViewAsset> {
     String filePath = '${currentAsset?.relativePath}${currentAsset?.title}';
 
     if (rawEmbeddings.keys.contains(filePath)) {
+      SimilarityModel similarityModel = HiveService.instance.similarityModel;
+      similarityModel.searchSimilar(widget.folderPath, rawEmbeddings[filePath]);
     } else {
       CommonUtils.showSnackbar(
           context: context,

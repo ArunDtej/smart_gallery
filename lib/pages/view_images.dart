@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
@@ -80,7 +79,6 @@ class _ViewimagesState extends State<Viewimages> {
                   content:
                       "Generate labels for images in this folder locally to enable search. This one-time process usually takes just a few minutes.",
                   onConfirm: () async {
-
                     Model model = HiveService.instance.getModel();
                     if (HiveService.instance.isModelRunning) {
                       CommonUtils.showSnackbar(
@@ -90,6 +88,10 @@ class _ViewimagesState extends State<Viewimages> {
                       return;
                     }
                     model.predictFolder(widget.folderPath, context);
+                    CommonUtils.showSnackbar(
+                        context: context,
+                        message:
+                            "Generating encodings for images in the background, we will notify you once we are done!");
                   },
                   onCancel: () async {});
             },
@@ -98,7 +100,7 @@ class _ViewimagesState extends State<Viewimages> {
         ],
       ),
       body: totalAssets == 0
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: loadingAnimation)
           : GestureDetector(
               onHorizontalDragUpdate: (details) {
                 _handleSwipe(details.primaryDelta!);
@@ -152,7 +154,7 @@ class _GridItemState extends State<GridItem>
     with AutomaticKeepAliveClientMixin {
   Uint8List? imageBytes;
   bool isVideo = false;
-  var firstAsset;
+  AssetEntity? firstAsset;
   @override
   void initState() {
     super.initState();
@@ -165,11 +167,11 @@ class _GridItemState extends State<GridItem>
     firstAsset = asset.first;
 
     setState(() {
-      isVideo = firstAsset.type == AssetType.video;
+      isVideo = firstAsset?.type == AssetType.video;
     });
 
     final thumbnailData =
-        await firstAsset.thumbnailDataWithSize(const ThumbnailSize(300, 300));
+        await firstAsset?.thumbnailDataWithSize(const ThumbnailSize(300, 300));
     setState(() {
       imageBytes = thumbnailData;
     });
