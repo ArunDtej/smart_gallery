@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:smart_gallery/pages/view_asset.dart';
+import 'package:smart_gallery/utils/common_utils.dart';
+import 'package:smart_gallery/utils/hive_singleton.dart';
 
 const loadingAnimation = Center(
   child: SpinKitFadingCircle(
@@ -66,6 +69,28 @@ class _ViewimagesState extends State<Viewimages> {
             ),
           ],
         ),
+        actions: [
+          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(
+            onPressed: () {
+              CommonUtils.showDialogBox(
+                  context: context,
+                  title: "Generate labels?",
+                  content:
+                      "Generate labels for images in this folder to enable search. This one-time process uses local models and takes just a few minutes.",
+                  onConfirm: () {
+                    Box rawEmbeddings =
+                        HiveService.instance.getRawEmbeddingBox();
+                    print('my_logs ${rawEmbeddings.keys}');
+                    print('my_logs On confirm callback');
+                  },
+                  onCancel: () {
+                    print('my_logs On cancel callback');
+                  });
+            },
+            icon: const Icon(Icons.auto_awesome, color: Colors.white),
+          ),
+        ],
       ),
       body: totalAssets == 0
           ? const Center(child: CircularProgressIndicator())

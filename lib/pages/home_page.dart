@@ -13,10 +13,8 @@ class _HomePageState extends State<HomePage> {
   int minSize = 2;
   int maxSize = 5;
   int _scale = 2;
-  double _previousDelta = 0.0; // For detecting horizontal swipe direction
   List<AssetPathEntity> albumPaths = [];
-  bool _isSwiping = false;
-  bool _isPermissionGranted = false;
+  bool _isPermissionGranted = true;
 
   @override
   void initState() {
@@ -49,19 +47,15 @@ class _HomePageState extends State<HomePage> {
               onHorizontalDragUpdate: (details) {
                 _handleSwipe(details.primaryDelta!);
               },
-              onHorizontalDragEnd: (details) {
-                _isSwiping = false;
-              },
               child: Padding(
                 padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
                 child: getAlbums(),
               ),
             )
-          : _permissionDeniedUI(), // Show the permission denied UI
+          : _permissionDeniedUI(),
     );
   }
 
-  // UI when permission is not granted
   Widget _permissionDeniedUI() {
     return Center(
       child: Column(
@@ -76,21 +70,17 @@ class _HomePageState extends State<HomePage> {
           Text(
             "Permission Denied\nPlease allow access to photos.",
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
+            style: Theme.of(context).textTheme.labelSmall,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
               fetchAlbums();
             },
-            child: GestureDetector(
-                onTap: () {
-                  fetchAlbums();
-                },
-                child: Text("Try again!",style: Theme.of(context).textTheme.bodyLarge
-                )),
+            child: Text(
+              "Try again!",
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
           ),
         ],
       ),

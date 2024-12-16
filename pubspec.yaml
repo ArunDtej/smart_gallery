@@ -43,11 +43,12 @@ dependencies:
   photo_manager: 3.6.1
   image: ^4.4.0
   flutter_spinkit: ^5.0.0
-  # video_player: ^2.9.2
   url_launcher: ^6.1.4
   open_file: ^3.3.0
   photo_view: ^0.14.0
-  # skeletonizer: ^1.4.2
+  fluttertoast: ^8.2.10
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:

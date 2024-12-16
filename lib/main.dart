@@ -1,9 +1,15 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_gallery/pages/home_page.dart';
+import 'package:smart_gallery/utils/hive_singleton.dart';
 
-void main() {
-  runApp(MyApp());
+dynamic rawEmbeddingHive;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await HiveService.instance.init();
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
