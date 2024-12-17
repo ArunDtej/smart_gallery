@@ -20,8 +20,6 @@ class Model {
       'assets/models/mobilenet_v3_embedder.tflite',
       options: interpreterOptions,
     );
-    final isolateInterpreter =
-        await IsolateInterpreter.create(address: _interpreter!.address);
   }
 
   Future<Float32List> preprocessImage(Uint8List imageBytes) async {
@@ -46,7 +44,7 @@ class Model {
     return Float32List.fromList(floatValues);
   }
 
-  Future<List<List<double>>> predictBatch(List<Float32List> batchInput) async {
+  Future<List<dynamic>> predictBatch(List<Float32List> batchInput) async {
     List<Object> inputList = [];
     for (var image in batchInput) {
       inputList.add(image.reshape([224, 224, 3]));
@@ -54,23 +52,13 @@ class Model {
 
     List<Object> inputs = inputList;
 
-    Map<int, List<double>> outputs = {};
-    for (int i = 0; i < batchInput.length; i++) {
-      outputs[i] = List<double>.filled(1024, 0);
-    }
+    List<dynamic> oup =
+        List<double>.from(List<double>.filled(1024 * inputs.length, 0.0))
+            .reshape([inputs.length, 1024]);
 
-    print(inputs.shape);
+    _interpreter?.run(inputs, oup);
 
-    await isolateInterpreter?.runForMultipleInputs(inputs, outputs);
-
-    print(outputs);
-
-    List<List<double>> results = [];
-    for (int i = 0; i < batchInput.length; i++) {
-      results.add(List<double>.from(outputs[i]!));
-    }
-
-    return results;
+    return oup;
   }
 
   Future<void> predictFolder(
@@ -120,11 +108,10 @@ class Model {
                   batchInput.add(preprocessedImage);
 
                   if (batchInput.length == batchSize) {
-                    List<List<double>> results =
-                        await _processBatch(batchInput);
+                    List<dynamic> results = await _processBatch(batchInput);
                     total += batchInput.length;
 
-                    // assignLabels(paths, results, rawEmbeddings);
+                    assignLabels(paths, results, rawEmbeddings);
 
                     batchInput.clear();
                     paths.clear();
@@ -140,9 +127,9 @@ class Model {
           }
 
           if (batchInput.isNotEmpty) {
-            List<List<double>> results = await _processBatch(batchInput);
+            List<dynamic> results = await _processBatch(batchInput);
             total += batchInput.length;
-            // assignLabels(paths, results, rawEmbeddings);
+            assignLabels(paths, results, rawEmbeddings);
 
             batchInput.clear();
             paths.clear();
@@ -158,6 +145,7 @@ class Model {
         'Folder images Encoding Complete.',
         'Processed $total new images successfully!',
       );
+      embeddingBox.put('rawEmbeddings', rawEmbeddings);
 
       HiveService.instance.isModelRunning = false;
     } catch (e) {
@@ -165,9 +153,9 @@ class Model {
     }
   }
 
-  Future<List<List<double>>> _processBatch(List<Float32List> batchInput) async {
+  Future<List<dynamic>> _processBatch(List<Float32List> batchInput) async {
     try {
-      List<List<double>> predictions = await predictBatch(batchInput);
+      List<dynamic> predictions = await predictBatch(batchInput);
       return predictions;
     } catch (e) {
       print('Error during batch prediction: $e');
@@ -196,8 +184,8 @@ class Model {
     );
   }
 
-  void assignLabels(List paths, List<List<double>> results,
-      Map<dynamic, dynamic> rawEmbeddings) {
+  void assignLabels(
+      List paths, List<dynamic> results, Map<dynamic, dynamic> rawEmbeddings) {
     for (int i = 0; i < paths.length; i++) {
       rawEmbeddings[paths[i]] = results[i];
     }
