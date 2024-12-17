@@ -42,6 +42,26 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back_ios_sharp)),
+        title: TextField(
+          onChanged: (query) {
+            setState(() {
+              _searchQuery = query;
+            });
+          },
+          decoration: const InputDecoration(
+            hintText: 'Search...',
+            border: InputBorder.none,
+            suffixIcon: Icon(Icons.search),
+          ),
+        ),
+      ),
       body: Container(
         padding: const EdgeInsets.all(12),
         child: isLoading ? loadingAnimation : getGridBody(),

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:smart_gallery/pages/search_page.dart';
 import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
@@ -70,7 +71,17 @@ class _ViewimagesState extends State<Viewimages> {
           ],
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SearchPage(
+                            searchQuery: null,
+                            pathAsset: widget.folderPath,
+                            searchVector: null)));
+              },
+              icon: const Icon(Icons.search)),
           IconButton(
             onPressed: () {
               CommonUtils.showDialogBox(
@@ -93,7 +104,7 @@ class _ViewimagesState extends State<Viewimages> {
                         message:
                             "Generating encodings for images in the background, we will notify you once we are done!");
                   },
-                  onCancel: () async {});
+                  onCancel: () {});
             },
             icon: const Icon(Icons.auto_awesome, color: Colors.white),
           ),
@@ -110,7 +121,6 @@ class _ViewimagesState extends State<Viewimages> {
     );
   }
 
-  // Swipe handling logic
   void _handleSwipe(double delta) {
     if (delta.abs() > dragThreshold) {
       setState(() {
@@ -171,7 +181,7 @@ class _GridItemState extends State<GridItem>
     });
 
     final thumbnailData =
-        await firstAsset?.thumbnailDataWithSize(const ThumbnailSize(300, 300));
+        await firstAsset?.thumbnailDataWithSize(const ThumbnailSize(224, 224));
     setState(() {
       imageBytes = thumbnailData;
     });

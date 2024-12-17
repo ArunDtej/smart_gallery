@@ -11,6 +11,7 @@ class HiveService {
   SimilarityModel similarityModel = SimilarityModel();
   bool isModelRunning = false;
   bool isSimilarityModelRunning = false;
+  int resolutionLimit = 18000;
 
   Future<void> init() async {
     await Hive.initFlutter();

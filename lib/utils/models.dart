@@ -30,6 +30,7 @@ class Model {
 
     img.Image resizedImage =
         img.copyResize(imageDecoded, width: 224, height: 224);
+    // img.Image resizedImage = imageDecoded;
 
     List<double> floatValues = [];
     for (int y = 0; y < resizedImage.height; y++) {
@@ -75,7 +76,7 @@ class Model {
       bool hasMoreAssets = true;
       int batchSize = 25;
       int total = 0;
-      const int maxImageSize = 4500;
+      int maxImageSize = HiveService.instance.resolutionLimit;
 
       while (hasMoreAssets) {
         List<AssetEntity> assets =
@@ -95,7 +96,11 @@ class Model {
                   asset.orientatedWidth < maxImageSize &&
                   !existingImages.contains(filePath)) {
                 paths.add(filePath);
-                var byteData = await asset.originBytes;
+
+                // var byteData = await asset.originBytes;
+                var byteData = await asset
+                    .thumbnailDataWithSize(const ThumbnailSize(224, 224));
+
                 if (byteData != null) {
                   var decodedImage =
                       img.decodeImage(Uint8List.fromList(byteData));

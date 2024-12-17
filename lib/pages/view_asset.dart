@@ -316,9 +316,11 @@ class _ViewAssetState extends State<ViewAsset> {
   }
 
   void searchForSimilar() {
+    int resolutionLimit = HiveService.instance.resolutionLimit;
     if (currentAsset == null ||
-        (currentAsset?.orientatedHeight ?? 3001) > 3000 ||
-        (currentAsset?.orientatedWidth ?? 3001) > 3000 ||
+        (currentAsset?.orientatedHeight ?? resolutionLimit + 1) >
+            resolutionLimit ||
+        (currentAsset?.orientatedWidth ?? resolutionLimit) > resolutionLimit ||
         currentAsset?.type != AssetType.image) {
       CommonUtils.showSnackbar(
           context: context,
