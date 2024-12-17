@@ -27,6 +27,7 @@ class SimilarityModel {
     var size = 100;
     int page = 0;
     List<Float32List> allImagesEmbeddings = [];
+    List<AssetEntity> assets = [];
     Map rawEmbeddings =
         HiveService.instance.getEmbeddingsBox().get('rawEmbeddings');
     var embeddedKeys = rawEmbeddings.keys;
@@ -44,6 +45,7 @@ class SimilarityModel {
 
         if (embeddedKeys.contains(path)) {
           List<double> rawEmbedding = List<double>.from(rawEmbeddings[path]);
+          assets.add(images[i]);
           allImagesEmbeddings.add(Float32List.fromList(rawEmbedding));
         }
       }
@@ -55,7 +57,8 @@ class SimilarityModel {
 
     List<int> sortedArgs = argsort(outputs).reversed.toList();
 
-    return [];
+    return List<AssetEntity>.generate(
+        sortedArgs.length, (index) => assets[sortedArgs[index]]);
   }
 
   Future<List<dynamic>> predictBatch(

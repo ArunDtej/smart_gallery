@@ -75,7 +75,7 @@ class Model {
       bool hasMoreAssets = true;
       int batchSize = 25;
       int total = 0;
-      const int maxImageSize = 3000;
+      const int maxImageSize = 4500;
 
       while (hasMoreAssets) {
         List<AssetEntity> assets =

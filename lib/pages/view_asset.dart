@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:open_file/open_file.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:smart_gallery/pages/search_page.dart';
 import 'dart:math';
 import 'dart:async';
 
@@ -330,8 +331,13 @@ class _ViewAssetState extends State<ViewAsset> {
     String filePath = '${currentAsset?.relativePath}${currentAsset?.title}';
 
     if (rawEmbeddings.keys.contains(filePath)) {
-      SimilarityModel similarityModel = HiveService.instance.similarityModel;
-      similarityModel.searchSimilar(widget.folderPath, rawEmbeddings[filePath]);
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => SearchPage(
+                  searchQuery: null,
+                  pathAsset: widget.folderPath,
+                  searchVector: rawEmbeddings[filePath])));
     } else {
       CommonUtils.showSnackbar(
           context: context,
