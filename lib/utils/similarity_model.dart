@@ -51,7 +51,9 @@ class SimilarityModel {
       page++;
     }
 
-    predictBatch(allImagesEmbeddings, searchFor);
+    List<dynamic> outputs = await predictBatch(allImagesEmbeddings, searchFor);
+
+    List<int> sortedArgs = argsort(outputs).reversed.toList();
 
     return [];
   }
@@ -75,5 +77,11 @@ class SimilarityModel {
     _interpreter?.run(inputs, outputs);
 
     return outputs;
+  }
+
+  List<int> argsort(List<dynamic> list) {
+    List<int> indices = List<int>.generate(list.length, (index) => index);
+    indices.sort((a, b) => list[a].compareTo(list[b]));
+    return indices;
   }
 }

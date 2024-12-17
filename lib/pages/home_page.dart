@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:smart_gallery/pages/view_images.dart';
+import 'package:smart_gallery/utils/permission_manager.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,6 +26,7 @@ class _HomePageState extends State<HomePage> {
 
   void fetchAlbums() async {
     final PermissionState ps = await PhotoManager.requestPermissionExtend();
+    await Permission.notification.request();
     if (ps.isAuth) {
       final paths = await PhotoManager.getAssetPathList();
       setState(() {
