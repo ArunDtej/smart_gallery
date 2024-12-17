@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -29,6 +30,8 @@ class _ViewimagesState extends State<Viewimages> {
   int crossAxisCount = 4;
   double dragThreshold = 8.0;
   double previousDelta = 0.0;
+  bool showProgressBar = false;
+  double progressValue = 0;
 
   @override
   void initState() {
@@ -91,6 +94,7 @@ class _ViewimagesState extends State<Viewimages> {
                       "Generate labels for images in this folder locally to enable search. This one-time process usually takes just a few minutes.",
                   onConfirm: () async {
                     Model model = HiveService.instance.getModel();
+                    HiveService.instance.isBroken = false;
                     if (HiveService.instance.isModelRunning) {
                       CommonUtils.showSnackbar(
                           context: context,
@@ -103,6 +107,11 @@ class _ViewimagesState extends State<Viewimages> {
                         context: context,
                         message:
                             "Generating encodings for images in the background, we will notify you once we are done!");
+
+                    setState(() {
+                      showProgressBar = true;
+                    });
+                    trackProgressbar();
                   },
                   onCancel: () {});
             },
@@ -116,7 +125,48 @@ class _ViewimagesState extends State<Viewimages> {
               onHorizontalDragUpdate: (details) {
                 _handleSwipe(details.primaryDelta!);
               },
-              child: getGridBody(),
+              child: Stack(
+                children: [
+                  getGridBody(),
+                  if (showProgressBar) ...[
+                    AbsorbPointer(
+                      absorbing: true,
+                      child: Container(
+                        color: Colors.black,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 45),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                loadingAnimation,
+                                Container(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 25),
+                                  child: LinearProgressIndicator(
+                                    value: progressValue,
+                                    backgroundColor: Colors.grey[200],
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            Colors.blue),
+                                    minHeight: 5,
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: Text(
+                                      "Generating encodings. Please stay on this page and avoid pressing the back button or navigating away. You can keep the app running in the background, but ensure not to go back or close the page until the process is complete."),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
     );
   }
@@ -134,6 +184,26 @@ class _ViewimagesState extends State<Viewimages> {
     previousDelta = delta;
   }
 
+  Future<void> trackProgressbar() async {
+    Timer.periodic(const Duration(seconds: 2), (timer) {
+      print(
+          'my_logs printing ${HiveService.instance.generateEmbeddingsProgress}');
+      if (HiveService.instance.generateEmbeddingsProgress < 1) {
+        setState(() {
+          progressValue = HiveService.instance.generateEmbeddingsProgress;
+        });
+      } else {
+        setState(() {
+          progressValue = 1;
+          HiveService.instance.generateEmbeddingsProgress = 0;
+          showProgressBar = false;
+          timer.cancel();
+        });
+      }
+    });
+    return;
+  }
+
   Widget getGridBody() {
     return GridView.builder(
       padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
@@ -147,6 +217,13 @@ class _ViewimagesState extends State<Viewimages> {
         return GridItem(index: index, folderPath: widget.folderPath);
       },
     );
+  }
+
+  @override
+  void dispose() {
+    HiveService.instance.isBroken = true;
+    HiveService.instance.isModelRunning = false;
+    super.dispose();
   }
 }
 

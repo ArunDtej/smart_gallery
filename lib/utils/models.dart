@@ -68,13 +68,15 @@ class Model {
     Box embeddingBox = HiveService.instance.getEmbeddingsBox();
     Map<dynamic, dynamic> rawEmbeddings = embeddingBox.get('rawEmbeddings');
     var existingImages = rawEmbeddings.keys;
+    int allAssets = await folderPath.assetCountAsync;
+    int batchSize = 25;
+    int totalPages = (allAssets + batchSize - 1) ~/ batchSize;
 
     List paths = [];
 
     try {
       int page = 0;
       bool hasMoreAssets = true;
-      int batchSize = 25;
       int total = 0;
       int maxImageSize = HiveService.instance.resolutionLimit;
 
@@ -98,8 +100,7 @@ class Model {
                 paths.add(filePath);
 
                 // var byteData = await asset.originBytes;
-                var byteData = await asset
-                    .thumbnailDataWithSize(const ThumbnailSize(224, 224));
+                var byteData = await asset.thumbnailData;
 
                 if (byteData != null) {
                   var decodedImage =
@@ -139,8 +140,18 @@ class Model {
             batchInput.clear();
             paths.clear();
           }
+          HiveService.instance.generateEmbeddingsProgress = page / totalPages;
+
+          print('my_logs updating progress ${page / totalPages}');
 
           page++;
+
+          if (HiveService.instance.isBroken) {
+            print("is_broken my_logs");
+            HiveService.instance.generateEmbeddingsProgress = 0;
+            HiveService.instance.isBroken = false;
+            return;
+          }
         } else {
           hasMoreAssets = false;
         }
@@ -153,7 +164,9 @@ class Model {
       embeddingBox.put('rawEmbeddings', rawEmbeddings);
 
       HiveService.instance.isModelRunning = false;
+      HiveService.instance.generateEmbeddingsProgress = 1;
     } catch (e) {
+      HiveService.instance.generateEmbeddingsProgress = 1;
       print('Error during folder prediction: $e');
     }
   }

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:smart_gallery/pages/view_asset.dart';
+// import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/pages/view_images.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';

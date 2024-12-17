@@ -12,6 +12,8 @@ class HiveService {
   bool isModelRunning = false;
   bool isSimilarityModelRunning = false;
   int resolutionLimit = 18000;
+  double generateEmbeddingsProgress = 0.0;
+  bool isBroken = false;
 
   Future<void> init() async {
     await Hive.initFlutter();
