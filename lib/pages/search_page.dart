@@ -6,6 +6,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:smart_gallery/pages/view_images.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
+import 'package:smart_gallery/utils/selectable_gridview.dart';
 import 'package:smart_gallery/utils/similarity_model.dart';
 
 class SearchPage extends StatefulWidget {
@@ -88,7 +89,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget getGridBody() {
-    return GridView.builder(
+    return SelectableGridview(
       padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,

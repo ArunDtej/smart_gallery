@@ -8,6 +8,7 @@ import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
 import 'package:smart_gallery/utils/models.dart';
+import 'package:smart_gallery/utils/selectable_gridview.dart';
 
 const loadingAnimation = Center(
   child: SpinKitFadingCircle(
@@ -205,7 +206,7 @@ class _ViewimagesState extends State<Viewimages> {
   }
 
   Widget getGridBody() {
-    return GridView.builder(
+    return SelectableGridview(
       padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
