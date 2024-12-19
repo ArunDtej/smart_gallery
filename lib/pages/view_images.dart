@@ -42,6 +42,8 @@ class _ViewimagesState extends State<Viewimages> {
 
   void loadTotalAssets() async {
     final total = await widget.folderPath.assetCountAsync;
+    HiveService.instance.searchIndices =
+        List.generate(total + 1, (index) => index);
     setState(() {
       totalAssets = total;
     });
@@ -187,8 +189,6 @@ class _ViewimagesState extends State<Viewimages> {
 
   Future<void> trackProgressbar() async {
     Timer.periodic(const Duration(seconds: 2), (timer) {
-      print(
-          'my_logs printing ${HiveService.instance.generateEmbeddingsProgress}');
       if (HiveService.instance.generateEmbeddingsProgress < 1) {
         setState(() {
           progressValue = HiveService.instance.generateEmbeddingsProgress;
@@ -273,12 +273,15 @@ class _GridItemState extends State<GridItem>
         theme.brightness == Brightness.dark ? Colors.black : Colors.white;
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        int count = await widget.folderPath.assetCountAsync;
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                ViewAsset(index: widget.index, folderPath: widget.folderPath),
+            builder: (context) => ViewAsset(
+                index: widget.index,
+                folderPath: widget.folderPath,
+                indices: List.generate(count + 1, (index) => index)),
           ),
         );
       },

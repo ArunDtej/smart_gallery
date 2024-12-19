@@ -27,7 +27,7 @@ class SimilarityModel {
     );
   }
 
-  Future<List<AssetEntity>> searchSimilar(
+  Future<List<int>> searchSimilar(
       AssetPathEntity folderAsset, List<double> searchFor) async {
     var size = 100;
     int page = 0;
@@ -62,8 +62,9 @@ class SimilarityModel {
 
     List<int> sortedArgs = argsort(outputs).reversed.toList();
 
-    return List<AssetEntity>.generate(
-        sortedArgs.length, (index) => assets[sortedArgs[index]]);
+    // return List<AssetEntity>.generate(
+    //     sortedArgs.length, (index) => assets[sortedArgs[index]]);
+    return sortedArgs;
   }
 
   Future<List<dynamic>> predictBatch(

@@ -12,13 +12,17 @@ import 'dart:async';
 import 'package:smart_gallery/pages/view_images.dart';
 import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
-import 'package:smart_gallery/utils/similarity_model.dart';
 
 class ViewAsset extends StatefulWidget {
   final int index;
   final AssetPathEntity folderPath;
+  final List<int> indices;
 
-  const ViewAsset({super.key, required this.index, required this.folderPath});
+  const ViewAsset(
+      {super.key,
+      required this.index,
+      required this.folderPath,
+      required this.indices});
 
   @override
   _ViewAssetState createState() => _ViewAssetState();
@@ -65,8 +69,9 @@ class _ViewAssetState extends State<ViewAsset> {
       assetCreationDate = null;
     });
 
-    final List<AssetEntity> assets = await widget.folderPath
-        .getAssetListRange(start: currentIndex, end: currentIndex + 1);
+    final List<AssetEntity> assets = await widget.folderPath.getAssetListRange(
+        start: widget.indices[currentIndex],
+        end: widget.indices[currentIndex] + 1);
 
     if (assets.isNotEmpty) {
       currentAsset = assets.first;
@@ -84,7 +89,7 @@ class _ViewAssetState extends State<ViewAsset> {
           isVideo = true;
         });
         final videoThumbnail = await currentAsset!
-            .thumbnailDataWithSize(const ThumbnailSize(800, 800));
+            .thumbnailDataWithSize(const ThumbnailSize(400, 400));
         setState(() {
           imageBytes = videoThumbnail;
           isLoading = false;

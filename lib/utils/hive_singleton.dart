@@ -14,6 +14,7 @@ class HiveService {
   int resolutionLimit = 18000;
   double generateEmbeddingsProgress = 0.0;
   bool isBroken = false;
+  late List<int> searchIndices;
 
   Future<void> init() async {
     await Hive.initFlutter();

@@ -15,7 +15,7 @@ class Model {
 
   Future<void> initModel() async {
     var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
-    interpreterOptions.threads = 3;
+    // interpreterOptions.threads = 3;
 
     // final gpuDelegateV2 = GpuDelegateV2(
     //     options: GpuDelegateOptionsV2(isPrecisionLossAllowed: false));

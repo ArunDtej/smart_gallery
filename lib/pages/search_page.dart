@@ -2,9 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-// import 'package:smart_gallery/pages/view_asset.dart';
+import 'package:smart_gallery/pages/view_asset.dart';
 import 'package:smart_gallery/pages/view_images.dart';
-import 'package:smart_gallery/utils/common_utils.dart';
 import 'package:smart_gallery/utils/hive_singleton.dart';
 import 'package:smart_gallery/utils/selectable_gridview.dart';
 import 'package:smart_gallery/utils/similarity_model.dart';
@@ -27,15 +26,12 @@ class _SearchPageState extends State<SearchPage> {
   late List<double>? _searchVector;
   late String? _searchQuery;
   bool isLoading = true;
-  List<AssetEntity> _searchAssets = [];
+  List<int> _searchIndices = [];
 
   @override
   void initState() {
     _searchQuery = widget.searchQuery;
     _searchVector = widget.searchVector;
-    if (_searchVector == null) {
-      setSearchEmbeddings(_searchQuery);
-    }
     setSearchEmbeddings(_searchQuery);
     super.initState();
   }
@@ -56,32 +52,44 @@ class _SearchPageState extends State<SearchPage> {
               _searchQuery = query;
             });
           },
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Search...',
             border: InputBorder.none,
-            suffixIcon: Icon(Icons.search),
+            suffixIcon: IconButton(
+                onPressed: () => {
+                      print(
+                          'pressed on search with the folowing query $_searchQuery')
+                    },
+                icon: const Icon(Icons.search)),
           ),
         ),
       ),
       body: Container(
-        padding: const EdgeInsets.all(12),
-        child: isLoading ? loadingAnimation : getGridBody(),
+        padding: const EdgeInsets.all(4),
+        child: (_searchVector != null)
+            ? (isLoading ? loadingAnimation : getGridBody())
+            : const Center(
+                child: Text(
+                  "No search query provided,\n type something in the search bar!",
+                  textAlign: TextAlign.center,
+                ),
+              ),
       ),
     );
   }
 
   Future<void> setSearchEmbeddings(String? searchQuery) async {
-    // _searchVector = [];
-
     SimilarityModel similarityModel = HiveService.instance.similarityModel;
 
-    _searchAssets =
-        await similarityModel.searchSimilar(widget.pathAsset, _searchVector!);
+    if (_searchVector != null) {
+      _searchIndices =
+          await similarityModel.searchSimilar(widget.pathAsset, _searchVector!);
+    } else {}
 
-    if (_searchAssets.isNotEmpty) {
+    if (_searchIndices.isNotEmpty) {
+      HiveService.instance.searchIndices = _searchIndices;
       setState(() {
         isLoading = false;
-        print('my_logs setting isloading to false');
       });
     }
 
@@ -90,25 +98,33 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget getGridBody() {
     return SelectableGridview(
-      padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
+      padding: const EdgeInsets.only(left: 4, right: 4, top: 4),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
+        crossAxisSpacing: 4,
+        mainAxisSpacing: 4,
       ),
-      itemCount: _searchAssets.length,
+      itemCount: _searchIndices.length,
       itemBuilder: (context, index) {
-        return GridItem(searchAsset: _searchAssets[index], context: context);
+        return GridItem(
+            searchAssetIndex: index,
+            context: context,
+            pathEntity: widget.pathAsset);
       },
     );
   }
 }
 
 class GridItem extends StatefulWidget {
-  final AssetEntity searchAsset;
+  final int searchAssetIndex;
   final BuildContext context;
+  final AssetPathEntity pathEntity;
 
-  const GridItem({super.key, required this.searchAsset, required this.context});
+  const GridItem(
+      {super.key,
+      required this.searchAssetIndex,
+      required this.context,
+      required this.pathEntity});
 
   @override
   State<GridItem> createState() => _GridItemState();
@@ -118,6 +134,8 @@ class _GridItemState extends State<GridItem>
     with AutomaticKeepAliveClientMixin {
   Uint8List? imageBytes;
 
+  late AssetEntity searchAsset;
+
   @override
   void initState() {
     _loadThumbnail();
@@ -126,8 +144,13 @@ class _GridItemState extends State<GridItem>
 
   void _loadThumbnail() async {
     try {
-      final thumbnailData = await widget.searchAsset
-          .thumbnailDataWithSize(const ThumbnailSize(300, 300));
+      final asset = await widget.pathEntity.getAssetListRange(
+          start: HiveService.instance.searchIndices[widget.searchAssetIndex],
+          end: HiveService.instance.searchIndices[widget.searchAssetIndex] + 1);
+      searchAsset = asset.first;
+
+      final thumbnailData = await searchAsset.thumbnailData;
+
       setState(() {
         imageBytes = thumbnailData;
       });
@@ -151,11 +174,16 @@ class _GridItemState extends State<GridItem>
 
     return GestureDetector(
       onTap: () {
-        CommonUtils.showSnackbar(
-            context: widget.context, message: "Clicked on Image!");
-
-        // Navigator.push(context, MaterialPageRoute(builder: (context) =>
-        //         ViewAsset(index: widget.index, folderPath: widget.folderPath),))
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ViewAsset(
+              index: widget.searchAssetIndex,
+              folderPath: widget.pathEntity,
+              indices: HiveService.instance.searchIndices,
+            ),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
