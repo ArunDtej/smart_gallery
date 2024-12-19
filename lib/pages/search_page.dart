@@ -96,9 +96,9 @@ class _SearchPageState extends State<SearchPage> {
         crossAxisSpacing: 2,
         mainAxisSpacing: 2,
       ),
-      itemCount: _searchAssets!.length,
+      itemCount: _searchAssets.length,
       itemBuilder: (context, index) {
-        return GridItem(searchAsset: _searchAssets![index], context: context);
+        return GridItem(searchAsset: _searchAssets[index], context: context);
       },
     );
   }

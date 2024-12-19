@@ -15,6 +15,12 @@ class Model {
 
   Future<void> initModel() async {
     var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
+    interpreterOptions.threads = 3;
+
+    // final gpuDelegateV2 = GpuDelegateV2(
+    //     options: GpuDelegateOptionsV2(isPrecisionLossAllowed: false));
+
+    // var interpreterOptions = InterpreterOptions()..addDelegate(gpuDelegateV2);
 
     _interpreter = await Interpreter.fromAsset(
       'assets/models/mobilenet_v3_embedder.tflite',
@@ -71,6 +77,7 @@ class Model {
     int allAssets = await folderPath.assetCountAsync;
     int batchSize = 25;
     int totalPages = (allAssets + batchSize - 1) ~/ batchSize;
+    int pageSize = batchSize;
 
     List paths = [];
 
@@ -82,7 +89,7 @@ class Model {
 
       while (hasMoreAssets) {
         List<AssetEntity> assets =
-            await folderPath.getAssetListPaged(page: page, size: 25);
+            await folderPath.getAssetListPaged(page: page, size: pageSize);
         paths.clear();
 
         print('Processing page $page with ${assets.length} assets.');
@@ -161,7 +168,7 @@ class Model {
         'Folder images Encoding Complete.',
         'Processed $total new images successfully!',
       );
-      embeddingBox.put('rawEmbeddings', rawEmbeddings);
+      // embeddingBox.put('rawEmbeddings', rawEmbeddings);
 
       HiveService.instance.isModelRunning = false;
       HiveService.instance.generateEmbeddingsProgress = 1;

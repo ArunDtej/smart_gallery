@@ -52,9 +52,10 @@ android {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
-
-    implementation 'com.google.android.gms:play-services-tflite-java:16.0.1'
-    implementation 'com.google.android.gms:play-services-tflite-gpu:16.1.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.13.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.13.0'
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.13.0'
+    
 }
 
 

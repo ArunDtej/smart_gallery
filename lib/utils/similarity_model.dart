@@ -14,11 +14,16 @@ class SimilarityModel {
   String progress = '0';
 
   Future<void> initModel() async {
-    var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
+    // var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
+    // interpreterOptions.threads = 3;
+    // final gpuDelegateV2 = GpuDelegateV2(
+    //     options: GpuDelegateOptionsV2(isPrecisionLossAllowed: false));
+
+    // var interpreterOptions = InterpreterOptions()..addDelegate(gpuDelegateV2);
 
     _interpreter = await Interpreter.fromAsset(
       'assets/models/cosine_similarity_model.tflite',
-      options: interpreterOptions,
+      // options: interpreterOptions,
     );
   }
 
