@@ -56,10 +56,13 @@ class _SearchPageState extends State<SearchPage> {
             hintText: 'Search...',
             border: InputBorder.none,
             suffixIcon: IconButton(
-                onPressed: () => {
-                      print(
-                          'pressed on search with the folowing query $_searchQuery')
-                    },
+                onPressed: () async {
+                  var result = await HiveService.instance.transformerModel
+                      .getTextEmbeddings(_searchQuery!);
+                  setState(() {
+                    _searchVector = result;
+                  });
+                },
                 icon: const Icon(Icons.search)),
           ),
         ),

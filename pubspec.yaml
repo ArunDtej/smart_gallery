@@ -77,6 +77,7 @@ flutter:
   assets:
     - assets/models/mobilenet_v3_embedder.tflite
     - assets/models/cosine_similarity_model.tflite
+    - assets/models/text_transformer_model.tflite
     # - images/a_dot_burr.jpeg
     # - images/a_dot_ham.jpeg
 

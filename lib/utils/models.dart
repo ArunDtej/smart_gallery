@@ -168,7 +168,7 @@ class Model {
         'Folder images Encoding Complete.',
         'Processed $total new images successfully!',
       );
-      // embeddingBox.put('rawEmbeddings', rawEmbeddings);
+      embeddingBox.put('rawEmbeddings', rawEmbeddings);
 
       HiveService.instance.isModelRunning = false;
       HiveService.instance.generateEmbeddingsProgress = 1;
