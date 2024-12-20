@@ -57,10 +57,10 @@ class _SearchPageState extends State<SearchPage> {
             border: InputBorder.none,
             suffixIcon: IconButton(
                 onPressed: () async {
-                  var result = await HiveService.instance.transformerModel
+                  var result = await HiveService.instance.albertModel
                       .getTextEmbeddings(_searchQuery!);
                   setState(() {
-                    _searchVector = result;
+                    // _searchVector = result;
                   });
                 },
                 icon: const Icon(Icons.search)),

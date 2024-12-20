@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:smart_gallery/utils/albert_model.dart';
 import 'package:smart_gallery/utils/models.dart';
 import 'package:smart_gallery/utils/similarity_model.dart';
-import 'package:smart_gallery/utils/text_transformer_model.dart';
 
 class HiveService {
   HiveService._privateConstructor();
@@ -10,13 +10,14 @@ class HiveService {
   late Box EmbeddingsBox;
   Model model = Model();
   SimilarityModel similarityModel = SimilarityModel();
-  TextTransformerModel transformerModel = TextTransformerModel();
   bool isModelRunning = false;
   bool isSimilarityModelRunning = false;
   int resolutionLimit = 18000;
   double generateEmbeddingsProgress = 0.0;
   bool isBroken = false;
   late List<int> searchIndices;
+
+  AlbertModel albertModel = AlbertModel();
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -26,8 +27,7 @@ class HiveService {
     }
     model.initModel();
     similarityModel.initModel();
-
-    transformerModel.initModel();
+    albertModel.initModel();
   }
 
   Box getEmbeddingsBox() {
