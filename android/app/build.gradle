@@ -44,6 +44,8 @@ android {
             shrinkResources true
 
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            consumerProguardFiles 'consumer-rules.pro'
         }
         
     }
@@ -53,7 +55,7 @@ android {
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
     implementation 'org.tensorflow:tensorflow-lite:2.13.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.13.0'
+    // implementation 'org.tensorflow:tensorflow-lite-gpu:2.13.0'
     implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.13.0'
     
 }

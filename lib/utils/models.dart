@@ -15,12 +15,6 @@ class Model {
 
   Future<void> initModel() async {
     var interpreterOptions = InterpreterOptions()..useNnApiForAndroid = true;
-    // interpreterOptions.threads = 3;
-
-    // final gpuDelegateV2 = GpuDelegateV2(
-    //     options: GpuDelegateOptionsV2(isPrecisionLossAllowed: false));
-
-    // var interpreterOptions = InterpreterOptions()..addDelegate(gpuDelegateV2);
 
     _interpreter = await Interpreter.fromAsset(
       'assets/models/mobilenet_v3_embedder.tflite',
