@@ -17,7 +17,7 @@ class HiveService {
   bool isBroken = false;
   late List<int> searchIndices;
 
-  AlbertModel albertModel = AlbertModel();
+  // AlbertModel albertModel = AlbertModel();
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -27,7 +27,7 @@ class HiveService {
     }
     model.initModel();
     similarityModel.initModel();
-    albertModel.initModel();
+    // albertModel.initModel();
   }
 
   Box getEmbeddingsBox() {

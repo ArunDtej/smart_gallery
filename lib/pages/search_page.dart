@@ -46,26 +46,29 @@ class _SearchPageState extends State<SearchPage> {
               Navigator.pop(context);
             },
             icon: const Icon(Icons.arrow_back_ios_sharp)),
-        title: TextField(
-          onChanged: (query) {
-            setState(() {
-              _searchQuery = query;
-            });
-          },
-          decoration: InputDecoration(
-            hintText: 'Search...',
-            border: InputBorder.none,
-            suffixIcon: IconButton(
-                onPressed: () async {
-                  var result = await HiveService.instance.albertModel
-                      .getTextEmbeddings(_searchQuery!);
-                  setState(() {
-                    // _searchVector = result;
-                  });
-                },
-                icon: const Icon(Icons.search)),
-          ),
-        ),
+        // title: TextField(
+        //   onChanged: (query) {
+        //     setState(() {
+        //       _searchQuery = query;
+        //       isLoading = true;
+        //     });
+        //   },
+        //   decoration: InputDecoration(
+        //     hintText: 'Search...',
+        //     border: InputBorder.none,
+        //     suffixIcon: IconButton(
+        //         onPressed: () async {
+        //           var result = await HiveService.instance.albertModel
+        //               .getTextEmbeddings(_searchQuery!);
+        //           setState(() {
+        //             _searchVector = result;
+        //             setSearchEmbeddings(_searchQuery);
+        //           });
+        //         },
+        //         icon: const Icon(Icons.search)),
+        //   ),
+        // ),
+      
       ),
       body: Container(
         padding: const EdgeInsets.all(4),
@@ -85,6 +88,7 @@ class _SearchPageState extends State<SearchPage> {
     SimilarityModel similarityModel = HiveService.instance.similarityModel;
 
     if (_searchVector != null) {
+      print('my_logs similarity search started ${_searchVector}');
       _searchIndices =
           await similarityModel.searchSimilar(widget.pathAsset, _searchVector!);
     } else {}

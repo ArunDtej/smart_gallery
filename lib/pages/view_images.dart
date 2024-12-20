@@ -77,17 +77,17 @@ class _ViewimagesState extends State<Viewimages> {
           ],
         ),
         actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => SearchPage(
-                            searchQuery: null,
-                            pathAsset: widget.folderPath,
-                            searchVector: null)));
-              },
-              icon: const Icon(Icons.search)),
+          // IconButton(
+          //     onPressed: () {
+          //       Navigator.push(
+          //           context,
+          //           MaterialPageRoute(
+          //               builder: (context) => SearchPage(
+          //                   searchQuery: null,
+          //                   pathAsset: widget.folderPath,
+          //                   searchVector: null)));
+          //     },
+          //     icon: const Icon(Icons.search)),
           IconButton(
             onPressed: () {
               CommonUtils.showDialogBox(
