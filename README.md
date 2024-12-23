@@ -31,4 +31,6 @@ This app is currently incomplete. The following features are planned but not yet
 *   **Image Caching:** Implementing image caching to improve performance and reduce loading times.
 *   **Error Handling and Edge Cases:** More comprehensive error handling and handling of edge cases (e.g., no images in the gallery, unsupported image formats).
 
-You are welcome to go through the codebase or use the models in your application :')
+You are welcome to go through the codebase or use the models in your application as I am abandoning the project :')
+
+I am implemented until multiitem select on images, I wanted to add, delete, share and some other functionalities, along with text based search that can search for images based on text. But I don't have the time or the will to do it, so posting it here hoping if this would be useful to any of you guys!
